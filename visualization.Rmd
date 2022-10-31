@@ -1,0 +1,45 @@
+---
+title: "Visualization"
+author: "Maisie Sun"
+date: "2022-10-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(ggridges)
+library(patchwork)
+library(ggsurvfit)
+
+```
+
+```{r}
+vis = 
+  read_csv("./data/MidtermProjectData.csv") %>%
+  janitor::clean_names() %>%
+  select(OSEX = ptsex, OAGE_INT = ptage, ODEP = dsmdephr, OSABUSE = dsmsubhr, SESCLASS = sesclass, OAGE_DEP = bedepon, OAGE_SABUSE = besubon, ID = id, PDEP = pardep, PMS = msparent) %>%
+  mutate(
+    OSEX = OSEX - 1,
+    PMS = PMS - 1,
+    age = ifelse(OAGE_DEP == "-1", OAGE_INT, OAGE_DEP),
+    event = ifelse(OAGE_DEP == "-1", 0, 1)
+  )
+
+plot = 
+  survfit2(Surv(age, event) ~ PDEP, data = vis) %>% 
+  ggsurvfit() +
+    labs(
+    x = "Age",
+    y = "Overall survival probability",
+  ) + 
+  scale_fill_discrete(name = "Parental depression", labels = c("Without depression", "With depression")) +
+  add_confidence_interval()
+
+plot
+
+ggsave("data/plot.png", plot, width = 10, height = 5)
+
+```
+
